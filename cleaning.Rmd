@@ -31,6 +31,11 @@ Also load dplyr, tidyr, skimr, ggplot2, stringr.
 
 ```{r}
 library(palmerpenguins)
+library(dplyr)
+library(tidyr)
+library(skimr)
+library(ggplot2)
+library(stringr)
 
 ```
 
@@ -40,7 +45,10 @@ The penguin package contains two data sets:
 `penguins` and `penguins_raw`.  Use the View() 
 function to look at the two data sets. You can also
 read over the help for the two data sets (`?penguins` `?penguins_raw`  )
-
+```{r}
+View(penguins)
+View(penguins_raw)
+```
 Our goal is to go from *penguins_raw *to a new 
 data set *penguins_new* that is as close as you can get it 
 to identical to penguins.   We can test if they
@@ -55,11 +63,12 @@ don't need to worry about the order of the steps.  And write in English, not cod
 
 ## My list of tasks
 
-1. 
-2.
-3.
-4.
-5. 
+1. Remove extra columns
+2. Remove missing values
+3. Rename some columns
+4. Change the format of some names. 
+5. switching the date column 
+6. Fix sex values and convert to factors
 
 
 ## Comparing data frames
@@ -77,23 +86,25 @@ That way you can periodically run it as you are working.
 
 ###  What happens if you run that code chunk now?
 
-
+It gives me an error.
 
 In the code chunk below create penguins_new from
 the penguins_raw data set using the assignment operator `<-`. 
 
 ```{r}
-
+penguins_new <- penguins_raw
 ```
 Now run your test code chunk again.
 
 In the code chunk below use base functions to get a sense of the data.  (See slides)
 
 ### What are some things you notice?
-
+344 rows, mixed data types, and a lot of columns.
 
 ```{r}
-
+nrow(penguins_new)
+names(penguins_new)
+str(penguins_new)
 ```
 
 Another way to get a sense of a data set is to use
@@ -103,11 +114,11 @@ Remember: How do you access a package?
 Do that below.
 
 ```{r}
-
+skim(penguins_new)
 ```
 
 ### Do you notice anything new? What?
-
+I noticed tha 290 comments are missing in that column. 
 
 
 ## Start cleaning
@@ -194,9 +205,20 @@ A piping example. Notice that penguins_new in the environment doesn't change.
 
 ### What is this code doing? Can you add more to it to continue your work?
 
+The code filters the dataset to include only the variables needed for analysis and saves that smaller dataset as penguins_new.
+
 ```{r eval=FALSE}
-penguins_new |> 
-     select(-studyName, -`Sample Number`)  
+penguins_new <- penguins_raw |> 
+  select(
+    Species,
+    Island,
+    `Culmen Length (mm)`,
+    `Culmen Depth (mm)`,
+    `Flipper Length (mm)`,
+    `Body Mass (g)`,
+    Sex,
+    `Date Egg`
+  )
 ```
 
 To make it update the penguins_new object, assign
@@ -206,7 +228,15 @@ the next chunk, check the data in the environment.
 
 ```{r}
 penguins_new <- penguins_new |> 
-                select(-studyName, -`Sample Number`) 
+                select(Species,
+    Island,
+    `Culmen Length (mm)`,
+    `Culmen Depth (mm)`,
+    `Flipper Length (mm)`,
+    `Body Mass (g)`,
+    Sex,
+    `Date Egg`
+  ) 
 ```
 Update the above code chunk to get rid of any other
 columns you don't need.  But be careful.
@@ -218,7 +248,14 @@ have it the way you want, assign your changes
 back to the object.
 
 ```{r}
-penguins_new |> rename(newname = oldname)
+penguins_new <- penguins_new |> rename(species = Species,
+    island = Island,
+    bill_length_mm = `Culmen Length (mm)`,
+    bill_depth_mm = `Culmen Depth (mm)`,
+    flipper_length_mm = `Flipper Length (mm)`,
+    body_mass_g = `Body Mass (g)`,
+    sex = Sex,date_egg = `Date Egg`
+  )
 ```
 
 Don't worry about doing all of them at this point because you can always go back and make changes.
@@ -230,13 +267,19 @@ Let's say we want to create year, what do we
 need to do? How can we find a function to do 
 what we want to do?
 
-```{r}
-penguins_raw |>  
-     mutate(year = WHAT, sex = WHAT)
-```
+
 
 Now continue working on your own for a while. 
 The important thing is to work iteratively, always  checking your partial results.
+```{r}
+penguins_new <- penguins_new |>
+  mutate(
+    year = as.integer(format(date_egg, "%Y")),
+    sex = tolower(sex)
+  )
+```
+
+
 
 
 One concept you might need at the end is `attributes`.  You can get the listing of attributes for a data frame (or any object in R)
@@ -247,6 +290,35 @@ You can remove, modify or add an attribute with the `attr()` function.
 setting a value (overwrites anything that is there already).
 
 attr(df , "attribute name") <- "newvalue"
+```{r}
+penguins_new <- penguins_new |> 
+  mutate(
+    species = case_when(
+      grepl("adeliae", species, ignore.case = TRUE) ~ "Adelie",
+      grepl("papua", species, ignore.case = TRUE) ~ "Gentoo",
+      grepl("chinstrap", species, ignore.case = TRUE) ~ "Chinstrap",
+      TRUE ~ species
+    )
+  ) 
+```
+
+```{r}
+penguins_new <- penguins_new |> 
+  mutate(
+    species = as.factor(species),
+    island = as.factor(island),
+    sex = as.factor(sex)
+  )
+```
+
+
+```{r}
+penguins_new <- penguins_new |> 
+  select(-`date_egg`)
+```
+
+
+
 
 Deleting an attribute completely.
 attr(df , "attribute name") <- NULL
@@ -269,8 +341,6 @@ next week, please come with your file ready to push if you haven't done that on 
 As a special challenge, now add a new variable
 to your data set based on data from the raw data that
 is not currently included. 
-
-
 
 
 
