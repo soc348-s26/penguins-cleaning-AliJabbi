@@ -323,6 +323,17 @@ penguins_new <- penguins_new |>
 Deleting an attribute completely.
 attr(df , "attribute name") <- NULL
 
+```{r}
+attributes(penguins)
+attributes(penguins_new)
+``` 
+
+
+```{r}
+attr(penguins_new, "spec") <- NULL
+```
+
+
 
 ### Test code chunk.
 
